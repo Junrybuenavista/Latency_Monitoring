@@ -1,0 +1,207 @@
+<html>
+<head>
+	
+
+<style>
+	* {
+	  box-sizing: border-box;
+	}
+
+	/* Create three equal columns that floats next to each other */
+	.column {
+	  float: left;
+	  width: 33%;
+	  padding: 10px;
+	  height: 300px; /* Should be removed. Only for demonstration */
+	}
+
+	/* Clear floats after the columns */
+	.row:after {
+	  content: "";
+	  display: table;
+	  clear: both;
+	}
+</style>
+	
+	<div style="background-color:fec726;">
+	    <br>
+		<center><h1>Mangoi Latency Monitoring</h1><img src="logos.png"></center>
+		<br>
+	</div>
+
+
+	
+	<div class="row" id="div2" style="background-color:f9d660;">
+		<br>
+		<center><h1>Internet problem logs</h1>
+		<textarea id="logs" rows="20" cols="200" readonly></textarea>
+	</div>
+	
+		<div class="row" id="div1" style="background-color:f9d660;">
+		
+	</div>
+	
+	<script  type="text/javascript">
+	var logtext = "";
+		function httpGet(theUrl) {
+			let xmlHttpReq = new XMLHttpRequest();
+			xmlHttpReq.open("GET", theUrl, false);
+			xmlHttpReq.send(null);
+			return xmlHttpReq.responseText;
+      }
+			
+			let users;
+		function buildArea(){
+			users = JSON.parse(httpGet("server.php?req=all&target="));			
+		
+		
+			
+			for (let i = 0; i < users.length; i++) {
+				const newDiv = document.createElement("div"); 
+				
+				
+				newDiv.setAttribute("class","column");
+				
+				const para2 = document.createElement("h3");
+				const node2 = document.createTextNode(users[i][0]);
+				
+				const para = document.createElement("textarea");
+				const node = document.createTextNode("Loading.");
+				para.setAttribute("id", users[i][0]);
+				//para.setAttribute("style", "color:red;");
+				para.setAttribute("rows", "16");
+				para.setAttribute("cols", "60");
+				para.setAttribute("style", "resize:none;");
+				para.setAttribute("style", "background-color:f9d660;");
+
+				
+			
+				
+				
+				para.appendChild(node);
+				para2.appendChild(node2);
+					
+				const element = document.getElementById("div1");
+		
+				const child = document.getElementById("p1");
+				
+				newDiv.appendChild(para2);
+				newDiv.appendChild(para);
+				
+				const currentDiv = document.getElementById("div1");
+				document.body.insertBefore(newDiv, currentDiv);
+				document.getElementById(users[i][0]).readOnly= true;
+				
+				//setInterval(function() { getPing("specific",users[i][0],users[i][0])}, 5000);
+			}
+			
+		}
+			
+		buildArea();
+		
+		function clearArea(){	
+			for (let i = 0; i < users.length; i++) {
+				document.getElementById(users[i][0]).innerHTML = "";
+			}
+		}
+			const delay = ms => new Promise(res => setTimeout(res, ms));
+				const yourFunction = async () => {
+				const users2=[];
+				for (let i = 0; i < users.length; i++){	
+						users2.push(users[i][1]);
+				}
+				//console.log(JSON.stringify(users));
+				while(true){
+					await delay(5000);
+					clearArea();
+					
+						try {
+							users3 =  JSON.parse(httpGet("outbound.php?mac="+JSON.stringify(users)));
+							
+							for (let i = 0; i < users3.length; i++) {		
+									if(checkDate(users3[i][2])){
+									//console.log(users3[i][2]);
+										document.getElementById(users3[i][3]).innerHTML = formatPing(users3[i][0]);
+										document.getElementById(users3[i][3]).setAttribute("style", "background-color:f9d660;");
+										if(users3[i][1]==1){
+									
+											document.getElementById(users3[i][3]).setAttribute("style", "color:green;background-color:f4f4f4;");
+											
+										}else{
+											document.getElementById(users3[i][3]).setAttribute("style", "color:red;background-color:f4f4f4;");
+											var d = new Date();
+											d.setTime(d.getTime() + d.getTimezoneOffset() * 60 * 1000 /* convert to UTC */ + (/* UTC+8 */ 8) * 60 * 60 * 1000);
+											var hour;
+											if(d.getHours()==0)hour=24;
+											else hour = d.getHours();
+											hour = hour+1;
+											hour = hour%12;
+											
+											var start = hour+":"+d.getMinutes().toString().padStart(2, '0');
+											
+											
+											logtext= logtext+users3[i][3]+": having a connection problem at "+start+"KT\n";
+											document.getElementById("logs").innerHTML = logtext;
+										}
+									}else{
+									        document.getElementById(users3[i][3]).setAttribute("style", "background-color:f9d660;");
+									}
+							}
+						}catch(err) {
+											
+						
+						}						
+									
+				}
+			};
+		yourFunction();
+		function formatPing(Ping){
+			const myArray = Ping.split("nn");
+			let ret="";
+			let i = 0;
+			
+			for (let i = 0; i < (myArray.length-1); i++) {
+				
+				if(myArray[i]==="timedout") ret = ret.concat("Request timed out.\n");
+				else ret = ret.concat("Reply from 180.150.230.195: bytes=32 "+myArray[i].replace("RR", ' ')+"\n");
+				
+			}
+		
+			return ret;
+		}
+		function checkDate(Datein){
+			var inn = Datein.split('YY');
+			//Datein.trim();
+			//Datein.replace(/[\r\n]/gm, '');
+			var todayDate = new Date().toISOString().slice(0, 10);
+			var check2 = checkTime(inn[1]); 
+			if(todayDate===inn[0]&&(check2>-5&&check2<3)) return true
+			else return false
+			
+		}
+		function checkTime(end){
+			var d = new Date();
+			d.setTime(d.getTime() + d.getTimezoneOffset() * 60 * 1000 /* convert to UTC */ + (/* UTC+8 */ 8) * 60 * 60 * 1000);
+			var hour;
+			if(d.getHours()==0)hour=24;
+			else hour = d.getHours();
+			var start = hour+":"+d.getMinutes();
+			
+			var diff = start.split(':').map((item,index) => end.split(':')[index] - item).join(':')
+			var minute = diff.split(':');
+			var diff2 = (minute[0]*60) + (minute[1]*1);
+			
+			return diff2;
+		}
+		
+		
+	</script>
+	
+	
+</head>
+<body>
+
+
+
+</body>
+</html>
